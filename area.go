@@ -16,6 +16,10 @@ func NewArea(l, u Point) *Area {
 	return a
 }
 
+func NewAreaAround(c Point, dX, dY float64) *Area {
+	return &Area{Point{c.x - dX, c.y - dY}, Point{c.x + dX, c.y + dY}, c}
+}
+
 func (a *Area) containsPoint(p PointPtr) bool {
 	return a.contains(p.X(), p.Y())
 }
