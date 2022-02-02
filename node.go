@@ -26,6 +26,11 @@ func NewNode(a *Area, cap int) *Node {
 	return &Node{area: a, points: make([]PointPtr, 0, cap), children: nil}
 }
 
+func NewTree(xMin, xMax, yMin, yMax float64, cap int) *Node {
+	a := NewArea(NewPoint(xMin, yMin), NewPoint(xMax, yMax))
+	return &Node{area: a, points: make([]PointPtr, 0, cap), children: nil}
+}
+
 func (n *Node) isLeaf() bool {
 	return n.children == nil
 }
