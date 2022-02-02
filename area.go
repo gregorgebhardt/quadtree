@@ -4,8 +4,8 @@ type Area struct {
 	l, u, c Point
 }
 
-func NewArea(l, u Point) *Area {
-	a := &Area{l, u, NewPoint((l.X()+u.X())/2., (l.y+u.y)/2.)}
+func NewArea(l, u *Point) *Area {
+	a := &Area{*l, *u, Point{(l.X() + u.X()) / 2., (l.y + u.y) / 2.}}
 	// swap points if necessary
 	if a.l.x > a.u.x {
 		a.l.x, a.u.x = a.u.x, a.l.x
@@ -34,11 +34,11 @@ func (a *Area) intersects(other *Area) bool {
 }
 
 func (a *Area) split() [4]*Area {
-	c := Point{x: (a.l.x + a.u.x) / 2., y: (a.l.y + a.u.y) / 2.}
+	c := NewPoint((a.l.x+a.u.x)/2., (a.l.y+a.u.y)/2.)
 	return [4]*Area{
 		NewArea(NewPoint(a.l.x, a.u.y), c),
-		NewArea(c, a.u),
-		NewArea(a.l, c),
+		NewArea(c, &a.u),
+		NewArea(&a.l, c),
 		NewArea(c, NewPoint(a.u.x, a.l.y)),
 	}
 }

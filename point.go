@@ -18,10 +18,10 @@ func (p *Point) Y() float64 {
 	return p.y
 }
 
-func NewPoint(x, y float64) Point {
-	return Point{x: x, y: y}
+func NewPoint(x, y float64) *Point {
+	return &Point{x: x, y: y}
 }
 
-func (p *Point) Equals(other *Point) bool {
-	return p.x == other.x && p.y == other.y
+func (p *Point) Equals(other PointPtr) bool {
+	return p.x == other.X() && p.y == other.Y()
 }
