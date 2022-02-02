@@ -56,6 +56,40 @@ func (n *Node) Get(point PointPtr) PointPtr {
 	}
 }
 
+func (n *Node) GetArea(a *Area) (collected []PointPtr) {
+	return n.GetAreaFiltered(a, func(_ PointPtr) bool { return true })
+}
+
+func (n *Node) GetAreaFiltered(a *Area, f func(PointPtr) bool) (collected []PointPtr) {
+	if n.isLeaf() {
+		collected = make([]PointPtr, 0, len(n.points))
+		for _, p := range n.points {
+			if a.containsPoint(p) && f(p) {
+				collected = append(collected, p)
+			}
+		}
+		return collected
+	} else {
+		c := make(chan []PointPtr)
+		defer close(c)
+		for _, child := range n.children {
+			child := child
+			go func() {
+				if child.area.intersects(a) {
+					c <- child.GetArea(a)
+				} else {
+					c <- make([]PointPtr, 0)
+				}
+			}()
+		}
+		collected = make([]PointPtr, 0, n.num)
+		for i := 0; i < 4; i++ {
+			collected = append(collected, <-c...)
+		}
+	}
+	return collected
+}
+
 func (n *Node) whichQuadrant(p PointPtr) Quadrant {
 	if p.Y() >= n.area.c.y {
 		//	northern quadrants
@@ -124,34 +158,4 @@ func (n *Node) Insert(p PointPtr) error {
 		}
 		return err
 	}
-}
-
-func (n *Node) GetArea(a *Area) (collected []PointPtr) {
-	if n.isLeaf() {
-		collected = make([]PointPtr, 0, len(n.points))
-		for _, p := range n.points {
-			if a.containsPoint(p) {
-				collected = append(collected, p)
-			}
-		}
-		return collected
-	} else {
-		c := make(chan []PointPtr)
-		defer close(c)
-		for _, child := range n.children {
-			child := child
-			go func() {
-				if child.area.intersects(a) {
-					c <- child.GetArea(a)
-				} else {
-					c <- make([]PointPtr, 0)
-				}
-			}()
-		}
-		collected = make([]PointPtr, 0, n.num)
-		for i := 0; i < 4; i++ {
-			collected = append(collected, <-c...)
-		}
-	}
-	return collected
 }
