@@ -10,7 +10,7 @@ import "fmt"
 type Element[V any, T Number] interface {
 	*V
 	p() *Point[T]
-	equals(other *V) bool
+	equals(*V) bool
 }
 
 //func (e *Element[T, V]) equals(other *Element[T, V]) bool {
