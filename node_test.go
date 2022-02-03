@@ -12,12 +12,8 @@ type TestElement struct {
 
 type TestNode Node[TestElement, float64]
 
-func (e *TestElement) p() *Point[float64] {
+func (e *TestElement) P() *Point[float64] {
 	return NewPoint[float64](e.x, e.y)
-}
-
-func (e *TestElement) equals(other *TestElement) bool {
-	return e.x == other.x && e.y == other.y
 }
 
 func TestNewNode(t *testing.T) {

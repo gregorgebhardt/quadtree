@@ -16,8 +16,8 @@ func NewArea[T Number](l, u *Point[T]) *Area[T] {
 	return a
 }
 
-func NewAreaAround[T Number](c *Point[T], dX, dY T) *Area[T] {
-	return &Area[T]{Point[T]{c.x - dX, c.y - dY}, Point[T]{c.x + dX, c.y + dY}, *c}
+func NewAreaAround[T Number](p *Point[T], dX, dY T) *Area[T] {
+	return &Area[T]{Point[T]{p.x - dX, p.y - dY}, Point[T]{p.x + dX, p.y + dY}, *p}
 }
 
 func (a *Area[T]) containsPoint(p *Point[T]) bool {

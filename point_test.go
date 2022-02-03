@@ -41,7 +41,7 @@ func TestPoint_equals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.pointA.equals(tt.pointB); got != tt.want {
+			if got := tt.pointA.Equals(tt.pointB); got != tt.want {
 				t.Errorf("Equals() = %v, want %v", got, tt.want)
 			}
 		})

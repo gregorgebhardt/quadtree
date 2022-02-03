@@ -2,20 +2,10 @@ package quadtree
 
 import "fmt"
 
-//type Element[T Number, V any] struct {
-//	p     Point[T]
-//	value V
-//}
-
 type Element[V any, T Number] interface {
 	*V
-	p() *Point[T]
-	equals(*V) bool
+	P() *Point[T]
 }
-
-//func (e *Element[T, V]) equals(other *Element[T, V]) bool {
-//	return e.p.equals(other.p)
-//}
 
 type Quadrant int
 
@@ -60,7 +50,7 @@ func (n *Node[V, T, E]) contains(p *Point[T]) bool {
 func (n *Node[V, T, E]) Get(p *Point[T]) E {
 	if n.elements != nil {
 		for _, e := range n.elements {
-			if p.equals(e.p()) {
+			if p.Equals(e.P()) {
 				return e
 			}
 		}
@@ -79,7 +69,7 @@ func (n *Node[V, T, E]) GetAreaFiltered(a *Area[T], f func(E) bool) (collected [
 	if n.isLeaf() {
 		collected = make([]E, 0, len(n.elements))
 		for _, e := range n.elements {
-			if a.containsPoint(e.p()) && f(e) {
+			if a.containsPoint(e.P()) && f(e) {
 				collected = append(collected, e)
 			}
 		}
@@ -128,7 +118,7 @@ func (n *Node[V, T, E]) split() {
 	}
 	var q Quadrant
 	for _, e := range n.elements {
-		q = n.whichQuadrant(e.p())
+		q = n.whichQuadrant(e.P())
 		_ = n.children[q].Insert(e)
 	}
 	n.elements = nil
@@ -150,7 +140,7 @@ func PointExistsError[V any, T Number, E Element[V, T]](e E) *ElementError[V, T,
 func (n *Node[V, T, E]) Insert(e E) error {
 	if n.isLeaf() && len(n.elements) < cap(n.elements) {
 		for _, b := range n.elements {
-			if b.equals(e) {
+			if b.P().Equals(e.P()) {
 				return PointExistsError[V, T, E](b)
 			}
 		}
@@ -160,13 +150,13 @@ func (n *Node[V, T, E]) Insert(e E) error {
 	} else {
 		if n.isLeaf() {
 			for _, b := range n.elements {
-				if b.equals(e) {
+				if b.P().Equals(e.P()) {
 					return PointExistsError[V, T, E](b)
 				}
 			}
 			n.split()
 		}
-		q := n.whichQuadrant(e.p())
+		q := n.whichQuadrant(e.P())
 		err := n.children[q].Insert(e)
 		if err == nil {
 			n.num++
