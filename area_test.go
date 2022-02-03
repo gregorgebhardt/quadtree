@@ -8,8 +8,8 @@ import (
 func TestArea_NewArea(t *testing.T) {
 	tests := []struct {
 		name string
-		l    *Point
-		u    *Point
+		l    *Point[float64]
+		u    *Point[float64]
 	}{
 		{"Test1", NewPoint(1., 1.), NewPoint(3., 3.)},
 		{"Test2", NewPoint(1., 3.), NewPoint(3., 1.)},
@@ -34,7 +34,7 @@ func TestArea_contains(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		area *Area
+		area *Area[float64]
 		args args
 		want bool
 	}{
@@ -63,8 +63,8 @@ func TestArea_contains(t *testing.T) {
 func TestArea_intersects(t *testing.T) {
 	tests := []struct {
 		name  string
-		area  *Area
-		other *Area
+		area  *Area[float64]
+		other *Area[float64]
 		want  bool
 	}{
 		{"TestSame", NewArea(NewPoint(1., 1.), NewPoint(3., 3.)),

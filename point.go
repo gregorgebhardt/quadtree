@@ -17,3 +17,7 @@ func NewPoint[T Number](x, y T) *Point[T] {
 func (p *Point[T]) equals(other *Point[T]) bool {
 	return p.x == other.x && p.y == other.y
 }
+
+func (p *Point[T]) p() *Point[T] {
+	return p
+}
