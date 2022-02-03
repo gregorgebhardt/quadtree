@@ -1,27 +1,19 @@
 package quadtree
 
-type PointPtr interface {
-	X() float64
-	Y() float64
-	Equals(ptr PointPtr) bool
+import "constraints"
+
+type Number interface {
+	constraints.Integer | constraints.Float
 }
 
-type Point struct {
-	x, y float64
+type Point[T Number] struct {
+	x, y T
 }
 
-func (p *Point) X() float64 {
-	return p.x
+func NewPoint[T Number](x, y T) *Point[T] {
+	return &Point[T]{x: x, y: y}
 }
 
-func (p *Point) Y() float64 {
-	return p.y
-}
-
-func NewPoint(x, y float64) *Point {
-	return &Point{x: x, y: y}
-}
-
-func (p *Point) Equals(other PointPtr) bool {
-	return p.x == other.X() && p.y == other.Y()
+func (p *Point[T]) equals(other *Point[T]) bool {
+	return p.x == other.x && p.y == other.y
 }

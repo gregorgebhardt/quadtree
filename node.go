@@ -2,6 +2,21 @@ package quadtree
 
 import "fmt"
 
+//type Element[T Number, V any] struct {
+//	p     Point[T]
+//	value V
+//}
+
+type Element[V any, T Number] interface {
+	*V
+	p() *Point[T]
+	equals(other *V) bool
+}
+
+//func (e *Element[T, V]) equals(other *Element[T, V]) bool {
+//	return e.p.equals(other.p)
+//}
+
 type Quadrant int
 
 const (
@@ -11,66 +26,66 @@ const (
 	SE
 )
 
-type Node struct {
-	area   *Area
-	points []PointPtr
-	num    int
+type Node[T Number, V any, E Element[V, T]] struct {
+	area     *Area[T]
+	elements []E
+	num      int
 
-	children []*Node
+	children []*Node[T, V, E]
 }
 
-func NewNode(a *Area, cap int) *Node {
+func NewNode[T Number, V any, E Element[V, T]](a *Area[T], cap int) *Node[T, V, E] {
 	if cap <= 0 {
 		return nil
 	}
-	return &Node{area: a, points: make([]PointPtr, 0, cap), children: nil}
+	return &Node[T, V, E]{area: a, elements: make([]E, 0, cap), children: nil}
 }
 
-func NewTree(xMin, xMax, yMin, yMax float64, cap int) *Node {
+func NewTree[T Number, V any, E Element[V, T]](xMin, xMax, yMin, yMax T, cap int) *Node[T, V, E] {
 	a := NewArea(NewPoint(xMin, yMin), NewPoint(xMax, yMax))
-	return &Node{area: a, points: make([]PointPtr, 0, cap), children: nil}
+	return &Node[T, V, E]{area: a, elements: make([]E, 0, cap), children: nil}
 }
 
-func (n *Node) isLeaf() bool {
+func (n *Node[T, V, E]) isLeaf() bool {
 	return n.children == nil
 }
 
-func (n *Node) contains(p PointPtr) bool {
+func (n *Node[T, V, E]) contains(p *Point[T]) bool {
 	if n == nil {
 		return false
 	}
 	return n.area.containsPoint(p)
 }
 
-func (n *Node) Get(point PointPtr) PointPtr {
-	if n.points != nil {
-		for _, p := range n.points {
-			if point.Equals(p) {
-				return p
+func (n *Node[T, V, E]) Get(p *Point[T]) E {
+	if n.elements != nil {
+		for _, e := range n.elements {
+			if p.equals(e.p()) {
+				return e
 			}
 		}
 		return nil
 	} else {
-		q := n.whichQuadrant(point)
-		return n.children[q].Get(point)
+		q := n.whichQuadrant(p)
+		return n.children[q].Get(p)
 	}
 }
 
-func (n *Node) GetArea(a *Area) (collected []PointPtr) {
-	return n.GetAreaFiltered(a, func(_ PointPtr) bool { return true })
+func (n *Node[T, V, E]) GetArea(a *Area[T]) []E {
+	return n.GetAreaFiltered(a, func(_ E) bool { return true })
 }
 
-func (n *Node) GetAreaFiltered(a *Area, f func(PointPtr) bool) (collected []PointPtr) {
+func (n *Node[T, V, E]) GetAreaFiltered(a *Area[T], f func(E) bool) (collected []E) {
 	if n.isLeaf() {
-		collected = make([]PointPtr, 0, len(n.points))
-		for _, p := range n.points {
-			if a.containsPoint(p) && f(p) {
-				collected = append(collected, p)
+		collected = make([]E, 0, len(n.elements))
+		for _, e := range n.elements {
+			if a.containsPoint(e.p()) && f(e) {
+				collected = append(collected, e)
 			}
 		}
 		return collected
 	} else {
-		c := make(chan []PointPtr)
+		c := make(chan []E)
 		defer close(c)
 		for _, child := range n.children {
 			child := child
@@ -78,11 +93,11 @@ func (n *Node) GetAreaFiltered(a *Area, f func(PointPtr) bool) (collected []Poin
 				if child.area.intersects(a) {
 					c <- child.GetArea(a)
 				} else {
-					c <- make([]PointPtr, 0)
+					c <- make([]E, 0)
 				}
 			}()
 		}
-		collected = make([]PointPtr, 0, n.num)
+		collected = make([]E, 0, n.num)
 		for i := 0; i < 4; i++ {
 			collected = append(collected, <-c...)
 		}
@@ -90,69 +105,69 @@ func (n *Node) GetAreaFiltered(a *Area, f func(PointPtr) bool) (collected []Poin
 	return collected
 }
 
-func (n *Node) whichQuadrant(p PointPtr) Quadrant {
-	if p.Y() >= n.area.c.y {
+func (n *Node[T, V, E]) whichQuadrant(p *Point[T]) Quadrant {
+	if p.y >= n.area.c.y {
 		//	northern quadrants
-		if p.X() >= n.area.c.x {
+		if p.x >= n.area.c.x {
 			return NE
 		}
 		return NW
 	} else {
 		//	southern quadrants
-		if p.X() >= n.area.c.x {
+		if p.x >= n.area.c.x {
 			return SE
 		}
 		return SW
 	}
 }
 
-func (n *Node) split() {
-	n.children = make([]*Node, 4)
+func (n *Node[T, V, E]) split() {
+	n.children = make([]*Node[T, V, E], 4)
 	for i, a := range n.area.split() {
-		n.children[i] = NewNode(a, cap(n.points))
+		n.children[i] = NewNode[T, V, E](a, cap(n.elements))
 	}
 	var q Quadrant
-	for _, p := range n.points {
-		q = n.whichQuadrant(p)
-		_ = n.children[q].Insert(p)
+	for _, e := range n.elements {
+		q = n.whichQuadrant(e.p())
+		_ = n.children[q].Insert(e)
 	}
-	n.points = nil
+	n.elements = nil
 }
 
-type PointError struct {
+type ElementError[T Number, V any, E Element[V, T]] struct {
 	msg string
-	p   PointPtr
+	e   E
 }
 
-func (e *PointError) Error() string {
-	return fmt.Sprintf("%s:\n%v", e.msg, e.p)
+func (e *ElementError[T, V, E]) Error() string {
+	return fmt.Sprintf("%s:\n%v", e.msg, e.e)
 }
 
-func PointExistsError(p PointPtr) *PointError {
-	return &PointError{"Point does already exist in Quadtree.", p}
+func PointExistsError[T Number, V any, E Element[V, T]](e E) *ElementError[T, V, E] {
+	return &ElementError[T, V, E]{"Point does already exist in Quadtree.", e}
 }
 
-func (n *Node) Insert(p PointPtr) error {
-	if n.isLeaf() && len(n.points) < cap(n.points) {
-		for _, b := range n.points {
-			if b.Equals(p) {
-				return PointExistsError(b)
+func (n *Node[T, V, E]) Insert(e E) error {
+	if n.isLeaf() && len(n.elements) < cap(n.elements) {
+		for _, b := range n.elements {
+			if b.equals(e) {
+				return PointExistsError[T, V, E](b)
 			}
 		}
-		n.points = append(n.points, p)
+		n.elements = append(n.elements, e)
 		n.num++
 		return nil
 	} else {
 		if n.isLeaf() {
-			for _, b := range n.points {
-				if b.Equals(p) {
-					return PointExistsError(b)
+			for _, b := range n.elements {
+				if b.equals(e) {
+					return PointExistsError[T, V, E](b)
 				}
 			}
 			n.split()
 		}
-		q := n.whichQuadrant(p)
-		err := n.children[q].Insert(p)
+		q := n.whichQuadrant(e.p())
+		err := n.children[q].Insert(e)
 		if err == nil {
 			n.num++
 		}

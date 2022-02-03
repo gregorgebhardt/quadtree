@@ -1,12 +1,12 @@
 package quadtree
 
-type Area struct {
-	l, u, c Point
+type Area[T Number] struct {
+	l, u, c Point[T]
 }
 
-func NewArea(l, u *Point) *Area {
-	a := &Area{*l, *u, Point{(l.X() + u.X()) / 2., (l.y + u.y) / 2.}}
-	// swap points if necessary
+func NewArea[T Number](l, u *Point[T]) *Area[T] {
+	a := &Area[T]{*l, *u, Point[T]{(l.x + u.x) / 2., (l.y + u.y) / 2.}}
+	// swap elements if necessary
 	if a.l.x > a.u.x {
 		a.l.x, a.u.x = a.u.x, a.l.x
 	}
@@ -16,29 +16,29 @@ func NewArea(l, u *Point) *Area {
 	return a
 }
 
-func NewAreaAround(c Point, dX, dY float64) *Area {
-	return &Area{Point{c.x - dX, c.y - dY}, Point{c.x + dX, c.y + dY}, c}
+func NewAreaAround[T Number](c *Point[T], dX, dY T) *Area[T] {
+	return &Area[T]{Point[T]{c.x - dX, c.y - dY}, Point[T]{c.x + dX, c.y + dY}, *c}
 }
 
-func (a *Area) containsPoint(p PointPtr) bool {
-	return a.contains(p.X(), p.Y())
+func (a *Area[T]) containsPoint(p *Point[T]) bool {
+	return a.contains(p.x, p.y)
 }
 
-func (a *Area) contains(x, y float64) bool {
+func (a *Area[T]) contains(x, y T) bool {
 	// lower bound is inclusive, upper bound is exclusive
 	return !(x < a.l.x || x >= a.u.x || y < a.l.y || y >= a.u.y)
 }
 
-func (a *Area) intersects(other *Area) bool {
+func (a *Area[T]) intersects(other *Area[T]) bool {
 	return !(a.l.x > other.u.x || a.l.y > other.u.y || a.u.x < other.l.x || a.u.y < other.l.y)
 }
 
-func (a *Area) split() [4]*Area {
-	c := NewPoint((a.l.x+a.u.x)/2., (a.l.y+a.u.y)/2.)
-	return [4]*Area{
-		NewArea(NewPoint(a.l.x, a.u.y), c),
-		NewArea(c, &a.u),
-		NewArea(&a.l, c),
-		NewArea(c, NewPoint(a.u.x, a.l.y)),
+func (a *Area[T]) split() [4]*Area[T] {
+	c := NewPoint[T]((a.l.x+a.u.x)/2., (a.l.y+a.u.y)/2.)
+	return [4]*Area[T]{
+		NewArea[T](NewPoint[T](a.l.x, a.u.y), c),
+		NewArea[T](c, &a.u),
+		NewArea[T](&a.l, c),
+		NewArea[T](c, NewPoint[T](a.u.x, a.l.y)),
 	}
 }
